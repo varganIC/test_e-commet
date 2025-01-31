@@ -71,7 +71,6 @@ class GithubReposScrapper:
                 data = await self._make_request(
                     endpoint=f'repos/{owner}/{repo}/commits'
                 )
-                print(dt.datetime.utcnow())
                 return data
 
     async def get_repositories(self) -> list[Repository]:
