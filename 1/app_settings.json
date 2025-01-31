@@ -1,0 +1,9 @@
+{
+    "db_settings": {
+        "user": "postgres",
+        "password": "postgres",
+        "database": "shop",
+        "host": "localhost",
+        "port": 5432
+    }
+}

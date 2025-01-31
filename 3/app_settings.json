@@ -1,0 +1,7 @@
+{
+    "db_settings": {
+        "url": "http://localhost:18123/",
+        "database": "test"
+    },
+    "github_api_base_url": "https://api.github.com"
+}
