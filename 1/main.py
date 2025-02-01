@@ -3,30 +3,17 @@ from typing import Annotated
 
 import asyncpg
 import uvicorn
-from fastapi import APIRouter, FastAPI, Depends
-
-# Я так понял, что необходимо вообще не хранить состояние
-# подключения к БД , сделал так, чтобы при каждом запросе к роуту
-# создавалось и корректно закрывалось соединение
+from fastapi import APIRouter, FastAPI, Depends, Request
 
 
 def get_config_db() -> dict:
     with open('app_settings.json', 'r', encoding='utf-8') as file:
         data = json.load(file)
-    return data
+    return data['db_settings']
 
 
-async def get_db_pool(
-    config: Annotated[dict, Depends(get_config_db)]
-) -> asyncpg.Pool:
-    async with asyncpg.create_pool(**config) as pool:
-        yield pool
-
-
-async def get_pg_connection(
-    pool: Annotated[asyncpg.Pool, Depends(get_db_pool)]
-) -> asyncpg.Connection:
-    async with pool.acquire() as conn:
+async def get_pg_connection(request: Request) -> asyncpg.Connection:
+    async with request.app.state.db_pool.acquire() as conn:
         yield conn
 
 
@@ -44,6 +31,16 @@ def register_routes(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="e-Comet")
+
+    @app.on_event("startup")
+    async def startup():
+        config = get_config_db()
+        app.state.db_pool = await asyncpg.create_pool(**config)
+
+    @app.on_event("shutdown")
+    async def shutdown():
+        await app.state.db_pool.close()
+
     register_routes(app)
     return app
 
